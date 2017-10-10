@@ -669,6 +669,8 @@ pub struct State {
     pub bundle: String,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub annotations: HashMap<String, String>,
+    //#[serde(default, skip_serializing_if = "String::is_empty")]
+    //pub owner: String,
 }
 
 impl State {

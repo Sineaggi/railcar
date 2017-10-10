@@ -22,6 +22,7 @@ extern crate prctl;
 extern crate scopeguard;
 extern crate seccomp_sys;
 extern crate oci;
+extern crate tabwriter;
 
 mod capabilities;
 mod cgroups;
@@ -33,6 +34,7 @@ mod seccomp;
 mod selinux;
 mod signals;
 mod nix_ext;
+mod list;
 
 use clap::{Arg, ArgMatches, App, AppSettings, SubCommand};
 use errors::*;
@@ -381,6 +383,12 @@ fn run() -> Result<()> {
                 )
                 .about("List processes in a (previously created) container"),
         )
+        .subcommand(
+            SubCommand::with_name("list")
+                .setting(AppSettings::ColoredHelp)
+                //.arg(&id_arg)
+                .about("List created containers"),
+        )
         .get_matches_from(get_args());
     let level = match matches.occurrences_of("v") {
         0 => log::LogLevelFilter::Info, //default
@@ -432,6 +440,9 @@ fn run() -> Result<()> {
         ("state", Some(state_matches)) => {
             cmd_state(state_matches.value_of("id").unwrap(), &state_dir)
         }
+        ("list", Some(list_matches)) => {
+            cmd_list()
+        }
         // We should never reach here because clap already enforces this
         _ => bail!("command not recognized"),
     }
@@ -442,7 +453,7 @@ fn instance_dir(id: &str, state_dir: &str) -> String {
     format!("{}/{}", state_dir, id)
 }
 
-fn state(id: &str, status: &str, pid: i32, bundle: &str) -> oci::State {
+fn state(id: &str, status: &str, pid: i32, bundle: &str/*, owner: &str*/) -> oci::State {
     oci::State {
         version: "0.2.0".to_string(),
         id: id.to_string(),
@@ -450,6 +461,7 @@ fn state(id: &str, status: &str, pid: i32, bundle: &str) -> oci::State {
         pid: pid,
         bundle: bundle.to_string(),
         annotations: HashMap::new(),
+        // owner: owner.to_string(),
     }
 }
 
@@ -565,6 +577,7 @@ fn finish_create(id: &str, dir: &str, matches: &ArgMatches) -> Result<()> {
     if child_pid != -1 {
         debug!("writing init pid file {}", child_pid);
         let mut f = File::create(INIT_PID)?;
+        write!(f, "{}", child_pid);
         f.write_all(child_pid.to_string().as_bytes())?;
         if pidfile != "" {
             debug!("writing process {} pid to file {}", child_pid, pidfile);
@@ -707,6 +720,10 @@ fn cmd_kill(id: &str, state_dir: &str, matches: &ArgMatches) -> Result<()> {
     } else {
         warn!("invalid process pid: {}", result);
     }
+    Ok(())
+}
+
+fn cmd_list() -> Result<()> {
     Ok(())
 }
 
