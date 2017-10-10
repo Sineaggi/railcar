@@ -577,7 +577,7 @@ fn finish_create(id: &str, dir: &str, matches: &ArgMatches) -> Result<()> {
     if child_pid != -1 {
         debug!("writing init pid file {}", child_pid);
         let mut f = File::create(INIT_PID)?;
-        write!(f, "{}", child_pid);
+        // write!(f, "{}", child_pid);
         f.write_all(child_pid.to_string().as_bytes())?;
         if pidfile != "" {
             debug!("writing process {} pid to file {}", child_pid, pidfile);
